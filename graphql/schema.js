@@ -104,21 +104,13 @@ const root = {
         if (!user) {
             throw new Error('User not found');
         }
-    
-        //const isAuth = await bcrypt.compare(password,user.password);
-        const isAuth = password === user.password;
-        console.log("password"+password)
-        console.log("user.password"+user.password)
-
-        console.log("isAuth"+isAuth)
-
+        
+        const isAuth = await bcrypt.compare(password, user.password); // Use bcrypt.compare to check the password
         if (!isAuth) {
             throw new Error('Incorrect password');
         }
-    
-        // Generate JWT token
+        
         const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '1h' });
-    
         return { token, user };
     },
     createVitalSigns: async ({ nurseId, patientId, temperature, heartRate, bloodPressure, respiratoryRate, notes }) => {
