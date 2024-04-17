@@ -59,6 +59,12 @@ const userSchema = new mongoose.Schema({
 //     }
 // };
 
+userSchema.pre('save', async function(next) {
+    if (!this.isModified('password')) return next();  // Only hash the password if it has been modified (or is new)
+    this.password = await bcrypt.hash(this.password, 12);  // Increase salt rounds if necessary for security
+    next();
+});
+
 const UserModel = mongoose.model('User', userSchema);
 
 module.exports = UserModel;
