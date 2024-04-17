@@ -13,7 +13,7 @@ const schema = buildSchema(`
         id: ID!
         email: String!
         username: String!
-        age: Int!
+        age: String!
         gender: String!
         role: String!
         registrationDate: String!
@@ -67,7 +67,7 @@ const schema = buildSchema(`
     }
 
     type Mutation {
-        createUser(email: String!, username: String!, age: Int!, gender: String!, role: String!, password: String!): User
+        createUser(email: String!, username: String!, age: String!, gender: String!, role: String!, password: String!): User
         loginUser(email: String!, password: String!): AuthResponse
         createVitalSigns(nurseId: ID!, patientId: ID!, temperature: Float, heartRate: Float, bloodPressure: String, respiratoryRate: Float, notes: String): VitalSigns
         createDailyInfo(patientId: ID!, pulseRate: Float, bloodPressure: String, weight: Float, temperature: Float, respiratoryRate: Float, medicationTaken: Boolean): DailyInfo
@@ -93,9 +93,10 @@ const root = {
     // Symptoms resolvers
     getSymptoms: async ({ id }) => await SymptomsModel.findById(id),
     // Mutation resolvers
-    createUser: async ({ email, username, age, gender, role, password }) => {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = new UserModel({ email, username, age, gender, role, password: hashedPassword });
+    createUser: async ({ email, username,password, age, gender, role,  }) => {
+        //const hashedPassword = await bcrypt.hash(password, 10);
+
+        const newUser = new UserModel({ email, username, age, gender, password: password, role });
         return await newUser.save();
     },
     loginUser: async ({ email, password }) => {
@@ -103,14 +104,22 @@ const root = {
         if (!user) {
             throw new Error('User not found');
         }
-        const isAuth = await bcrypt.compare(password, user.password);
+    
+        //const isAuth = await bcrypt.compare(password,user.password);
+        const isAuth = password === user.password;
+        console.log("password"+password)
+        console.log("user.password"+user.password)
+
+        console.log("isAuth"+isAuth)
+
         if (!isAuth) {
             throw new Error('Incorrect password');
         }
+    
         // Generate JWT token
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '1h' });
-
-    return { token, user };
+        const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '1h' });
+    
+        return { token, user };
     },
     createVitalSigns: async ({ nurseId, patientId, temperature, heartRate, bloodPressure, respiratoryRate, notes }) => {
         const newVitalSigns = new VitalSignsModel({ nurseId, patientId, temperature, heartRate, bloodPressure, respiratoryRate, notes });

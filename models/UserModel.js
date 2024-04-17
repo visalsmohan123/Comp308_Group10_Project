@@ -40,24 +40,24 @@ const userSchema = new mongoose.Schema({
     }
 });
 
-userSchema.pre('save', async function(next) {
-    const salt = await bcrypt.genSalt();
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-});
+// userSchema.pre('save', async function(next) {
+//     const salt = await bcrypt.genSalt();
+//     this.password = await bcrypt.hash(this.password, salt);
+//     next();
+// });
 
-userSchema.statics.login = async function(email, password) {
-    const user = await this.findOne({ email });
-    if (user) {
-        const isAuth = await bcrypt.compare(password, user.password);
-        if (isAuth) {
-            return user;
-        }
-        throw Error('Incorrect password');
-    } else {
-        throw Error('Email not found');
-    }
-};
+// userSchema.statics.login = async function(email, password) {
+//     const user = await this.findOne({ email });
+//     if (user) {
+//         const isAuth = await bcrypt.compare(password, user.password);
+//         if (isAuth) {
+//             return user;
+//         }
+//         throw Error('Incorrect password');
+//     } else {
+//         throw Error('Email not found');
+//     }
+// };
 
 const UserModel = mongoose.model('User', userSchema);
 
