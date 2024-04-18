@@ -19,5 +19,4 @@ const symptomsSchema = new mongoose.Schema({
 });
 
 const SymptomsModel = mongoose.model('Symptoms', symptomsSchema);
-
 module.exports = SymptomsModel;

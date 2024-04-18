@@ -135,10 +135,24 @@ const root = {
             throw new Error('Failed to save daily information');
         }
     },
-    createSymptoms: async ({ patientId, symptomsList, severity }) => {
-        const newSymptoms = new SymptomsModel({ patientId, symptomsList, severity });
-        return await newSymptoms.save();
-    },
+    ccreateSymptoms: async ({ patientId, symptomsList, severity }) => {
+        try {
+            const newSymptoms = new SymptomsModel({ patientId, symptomsList, severity });
+            const savedSymptoms = await newSymptoms.save();
+    
+            // Log the saved symptoms to the console to debug and verify their structure
+            console.log('Saved Symptoms:', savedSymptoms);
+    
+            if (!savedSymptoms) {
+                throw new Error('Creation of symptoms failed');
+            }
+    
+            return savedSymptoms;  // This should include the auto-generated ID and other properties
+        } catch (error) {
+            throw new Error('Failed to save symptoms: ' + error.message);
+        }
+    },  
+    
 };
 
 module.exports = { schema, root };
