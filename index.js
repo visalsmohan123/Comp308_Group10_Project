@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 const { graphqlHTTP } = require('express-graphql');
 const { schema, root } = require('./graphql/schema');
 const authRoutes = require('./routes/authRoutes');
+const predictionRoutes = require('./routes/predictRoutes');
 
 const { requireAuth } = require('./middleware/authMiddleware');
 
@@ -42,6 +43,8 @@ app.use(
     })
 );
 app.use("/graphql", requireAuth)
+
+app.use('/predictions', predictionRoutes);
 
 // Start the server
 server.listen(PORT, () => {
