@@ -131,13 +131,41 @@ const root = {
         return await newVitalSigns.save();
     },
     createDailyInfo: async ({ patientId, pulseRate, bloodPressure, weight, temperature, respiratoryRate, medicationTaken }) => {
-        const newDailyInfo = new DailyInfoModel({ patientId, pulseRate, bloodPressure, weight, temperature, respiratoryRate, medicationTaken });
-        return await newDailyInfo.save();
+        try {
+            // Parse float values from the input to ensure correct data types are saved
+            const newDailyInfo = new DailyInfoModel({
+                patientId,
+                pulseRate: parseFloat(pulseRate),
+                bloodPressure,
+                weight: parseFloat(weight),
+                temperature: parseFloat(temperature),
+                respiratoryRate: parseFloat(respiratoryRate),
+                medicationTaken
+            });
+            return await newDailyInfo.save();
+        } catch (error) {
+            console.error("Error saving daily info:", error);
+            throw new Error('Failed to save daily information');
+        }
     },
     createSymptoms: async ({ patientId, symptomsList, severity }) => {
-        const newSymptoms = new SymptomsModel({ patientId, symptomsList, severity });
-        return await newSymptoms.save();
-    },
+        try {
+            const newSymptoms = new SymptomsModel({ patientId, symptomsList, severity });
+            const savedSymptoms = await newSymptoms.save();
+    
+            // Log the saved symptoms to the console to debug and verify their structure
+            console.log('Saved Symptoms:', savedSymptoms);
+    
+            if (!savedSymptoms) {
+                throw new Error('Creation of symptoms failed');
+            }
+    
+            return savedSymptoms;  // This should include the auto-generated ID and other properties
+        } catch (error) {
+            throw new Error('Failed to save symptoms: ' + error.message);
+        }
+    },  
+    
 };
 
 module.exports = { schema, root };
