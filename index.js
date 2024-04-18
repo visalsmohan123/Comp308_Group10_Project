@@ -43,6 +43,18 @@ app.use(
 );
 app.use("/graphql", requireAuth)
 
+// Clear all documents from all collections
+app.get('/clear-database', async (req, res) => {
+    try {
+      await mongoose.connection.db.dropDatabase();
+      console.log('Database cleared successfully.')
+      res.status(200).send('Database cleared successfully.');
+    } catch (error) {
+      console.error('Error clearing database:', error);
+      res.status(500).send('Error clearing database.');
+    }
+  });
+
 // Start the server
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
