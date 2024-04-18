@@ -135,7 +135,7 @@ const root = {
             throw new Error('Failed to save daily information');
         }
     },
-    ccreateSymptoms: async ({ patientId, symptomsList, severity }) => {
+    createSymptoms: async ({ patientId, symptomsList, severity }) => {
         try {
             const newSymptoms = new SymptomsModel({ patientId, symptomsList, severity });
             const savedSymptoms = await newSymptoms.save();
