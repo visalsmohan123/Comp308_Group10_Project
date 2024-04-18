@@ -10,7 +10,7 @@ const { JWT_SECRET } = process.env;
 // Define GraphQL schema
 const schema = buildSchema(`
     type User {
-        id: ID!
+        id: String!
         email: String!
         username: String!
         age: String!
@@ -20,9 +20,10 @@ const schema = buildSchema(`
     }
 
     type VitalSigns {
-        id: ID!
-        nurseId: ID!
-        patientId: ID!
+        id: String!
+        nurseId: String
+        username:String
+        patientId: String!
         temperature: Float
         heartRate: Float
         bloodPressure: String
@@ -32,8 +33,8 @@ const schema = buildSchema(`
     }
 
     type DailyInfo {
-        id: ID!
-        patientId: ID!
+        id: String!
+        patientId: String!
         pulseRate: Float
         bloodPressure: String
         weight: Float
@@ -44,8 +45,8 @@ const schema = buildSchema(`
     }
 
     type Symptoms {
-        id: ID!
-        patientId: ID!
+        id: String!
+        patientId: String!
         symptomsList: [String]
         createdAt: String
         severity: String
@@ -57,21 +58,22 @@ const schema = buildSchema(`
     }
 
     type Query {
-        getUser(id: ID!): User
+        getUser(id: String!): User
         getAllUsers: [User]
-        getVitalSigns(nurseId: ID!, patientId: ID!): [VitalSigns]
-        getPreviousVitalSigns(patientId: ID!): [VitalSigns]
-        generateMedicalConditions(patientId: ID!): [String]
-        getDailyInfo(id: ID!): DailyInfo
-        getSymptoms(id: ID!): Symptoms
+        getUsersByRole(role: String!): [User]
+        getVitalSigns(nurseId: String!, patientId: String!): [VitalSigns]
+        getPreviousVitalSigns(patientId: String!): [VitalSigns]
+        generateMedicalConditions(patientId: String!): [String]
+        getDailyInfo(id: String!): DailyInfo
+        getSymptoms(id: String!): Symptoms
     }
 
     type Mutation {
         createUser(email: String!, username: String!, age: String!, gender: String!, role: String!, password: String!): User
         loginUser(email: String!, password: String!): AuthResponse
-        createVitalSigns(nurseId: ID!, patientId: ID!, temperature: Float, heartRate: Float, bloodPressure: String, respiratoryRate: Float, notes: String): VitalSigns
-        createDailyInfo(patientId: ID!, pulseRate: Float, bloodPressure: String, weight: Float, temperature: Float, respiratoryRate: Float, medicationTaken: Boolean): DailyInfo
-        createSymptoms(patientId: ID!, symptomsList: [String]!, severity: String): Symptoms
+        createVitalSigns(nurseId: String!, patientId: String!, temperature: Float, heartRate: Float, bloodPressure: String, respiratoryRate: Float, notes: String): VitalSigns
+        createDailyInfo(patientId: String!, pulseRate: Float, bloodPressure: String, weight: Float, temperature: Float, respiratoryRate: Float, medicationTaken: Boolean): DailyInfo
+        createSymptoms(patientId: String!, symptomsList: [String]!, severity: String): Symptoms
     }
 `);
 
@@ -80,6 +82,17 @@ const root = {
     // User resolvers
     getUser: async ({ id }) => await UserModel.findById(id),
     getAllUsers: async () => await UserModel.find(),
+    getUsersByRole: async ({ role }) => {
+        console.log("role", role);
+        try {
+          const users = await UserModel.findByRole(role);
+          console.log(users);
+          return users; // Make sure to return the users here
+        } catch (err) {
+          console.error('Error:', err);
+          throw err; // Throw the error to propagate it to the frontend
+        }
+      },
     // VitalSigns resolvers
     getVitalSigns: async ({ nurseId, patientId }) => await VitalSignsModel.find({ nurseId, patientId }),
     getPreviousVitalSigns: async ({ patientId }) => await VitalSignsModel.find({ patientId }),
