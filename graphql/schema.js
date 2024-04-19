@@ -5,7 +5,7 @@ const DailyInfoModel = require('../models/DailyInfoModel');
 const SymptomsModel = require('../models/SymptomsModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = process.env; 
+const { JWT_SECRET } = process.env;
 
 // Define GraphQL schema
 const schema = buildSchema(`
@@ -66,6 +66,8 @@ const schema = buildSchema(`
         generateMedicalConditions(patientId: String!): [String]
         getDailyInfo(id: String!): DailyInfo
         getSymptoms(id: String!): Symptoms
+        getSymptomsHistory(patientId: String!): [Symptoms]
+        getDailyInfoHistory(patientId: String!): [DailyInfo]  
     }
 
     type Mutation {
@@ -77,52 +79,27 @@ const schema = buildSchema(`
     }
 `);
 
+
 // Define resolvers
 const root = {
-    // User resolvers
+    // Existing resolvers
     getUser: async ({ id }) => await UserModel.findById(id),
     getAllUsers: async () => await UserModel.find(),
-    getUsersByRole: async ({ role }) => {
-        console.log("role", role);
-        try {
-          const users = await UserModel.findByRole(role);
-          console.log(users);
-          return users; // Make sure to return the users here
-        } catch (err) {
-          console.error('Error:', err);
-          throw err; // Throw the error to propagate it to the frontend
-        }
-      },
-    // VitalSigns resolvers
+    getUsersByRole: async ({ role }) => await UserModel.findByRole(role),
     getVitalSigns: async ({ nurseId, patientId }) => await VitalSignsModel.find({ nurseId, patientId }),
     getPreviousVitalSigns: async ({ patientId }) => await VitalSignsModel.find({ patientId }),
-    generateMedicalConditions: async ({ patientId }) => {
-        // Your deep learning logic to generate medical conditions goes here
-        // This is a placeholder, replace it with actual logic
-        return ["Fever", "Cold", "Flu"];
-    },
-    // DailyInfo resolvers
+    generateMedicalConditions: async ({ patientId }) => ["Fever", "Cold", "Flu"],
     getDailyInfo: async ({ id }) => await DailyInfoModel.findById(id),
-    // Symptoms resolvers
     getSymptoms: async ({ id }) => await SymptomsModel.findById(id),
-    // Mutation resolvers
-    createUser: async ({ email, username,password, age, gender, role,  }) => {
-        //const hashedPassword = await bcrypt.hash(password, 10);
-
-        const newUser = new UserModel({ email, username, age, gender, password: password, role });
+    createUser: async ({ email, username, password, age, gender, role }) => {
+        const newUser = new UserModel({ email, username, age, gender, password, role });
         return await newUser.save();
     },
     loginUser: async ({ email, password }) => {
         const user = await UserModel.findOne({ email });
-        if (!user) {
-            throw new Error('User not found');
-        }
-        
-        const isAuth = await bcrypt.compare(password, user.password); // Use bcrypt.compare to check the password
-        if (!isAuth) {
-            throw new Error('Incorrect password');
-        }
-        
+        if (!user) throw new Error('User not found');
+        const isAuth = await bcrypt.compare(password, user.password);
+        if (!isAuth) throw new Error('Incorrect password');
         const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '1h' });
         return { token, user };
     },
@@ -131,41 +108,39 @@ const root = {
         return await newVitalSigns.save();
     },
     createDailyInfo: async ({ patientId, pulseRate, bloodPressure, weight, temperature, respiratoryRate, medicationTaken }) => {
-        try {
-            // Parse float values from the input to ensure correct data types are saved
-            const newDailyInfo = new DailyInfoModel({
-                patientId,
-                pulseRate: parseFloat(pulseRate),
-                bloodPressure,
-                weight: parseFloat(weight),
-                temperature: parseFloat(temperature),
-                respiratoryRate: parseFloat(respiratoryRate),
-                medicationTaken
-            });
-            return await newDailyInfo.save();
-        } catch (error) {
-            console.error("Error saving daily info:", error);
-            throw new Error('Failed to save daily information');
-        }
+        const newDailyInfo = new DailyInfoModel({ patientId, pulseRate, bloodPressure, weight, temperature, respiratoryRate, medicationTaken });
+        return await newDailyInfo.save();
     },
     createSymptoms: async ({ patientId, symptomsList, severity }) => {
+        const newSymptoms = new SymptomsModel({ patientId, symptomsList, severity });
+        return await newSymptoms.save();
+    },
+    // Add new resolver here
+    getSymptomsHistory: async ({ patientId }) => {
         try {
-            const newSymptoms = new SymptomsModel({ patientId, symptomsList, severity });
-            const savedSymptoms = await newSymptoms.save();
-    
-            // Log the saved symptoms to the console to debug and verify their structure
-            console.log('Saved Symptoms:', savedSymptoms);
-    
-            if (!savedSymptoms) {
-                throw new Error('Creation of symptoms failed');
-            }
-    
-            return savedSymptoms;  // This should include the auto-generated ID and other properties
+            console.log("Fetching symptoms for patientId:", patientId);
+            const results = await SymptomsModel.find({ patientId: patientId });
+            console.log("Results:", results);
+            return results;
         } catch (error) {
-            throw new Error('Failed to save symptoms: ' + error.message);
+            console.error("Error fetching symptoms history:", error);
+            throw new Error('Failed to fetch symptoms history');
         }
-    },  
+    },
+    getDailyInfoHistory: async ({ patientId }) => {
+        try {
+            console.log("Fetching daily info for patientId:", patientId);
+            const results = await DailyInfoModel.find({ patientId: patientId });
+            console.log("Results:", results);
+            return results;
+        } catch (error) {
+            console.error("Error fetching daily info history:", error);
+            throw new Error('Failed to fetch daily info history');
+        }
+    },
     
 };
+
+
 
 module.exports = { schema, root };
